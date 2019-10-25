@@ -8,7 +8,7 @@ bot_url = "https://api.telegram.org/bot" + token
 last_update = 0
 
 command_history = {}
-
+api_key = '7sopi7Ekw99TV5rYxGXrzXIkq9dOZTAL'
 while True:
     params = {'timeout': 60, 'offset': last_update + 1}
     response = requests.post(bot_url + "/getUpdates", params)
@@ -26,6 +26,12 @@ while True:
                                                              msg['message']['location']['latitude'],
                                                              msg['message']['location']['latitude']),
                                                          'reply_markup': json.dumps({'remove_keyboard': True})})
+            location = msg['message']['location']
+            locations = '{},{}|marker-start|'.format(location['latitude'], location['longitude'])
+            requests.post(bot_url + "/sendPhoto", {'chat_id': msg['message']['chat']['id'],
+                                                   'photo': 'https://www.mapquestapi.com/staticmap/v5/map?locations={}&zoom=16&size=600,400@2x&key={}'.format(
+                                                       locations,
+                                                       api_key)})
             print("response: ", x.json())
         if 'text' in msg['message']:
             requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
