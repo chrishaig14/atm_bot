@@ -35,3 +35,5 @@ while True:
                     command = msg['message']['text'][entity['offset']:entity['offset'] + entity['length']]
                     requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
                                                              'text': 'Received command' + command})
+                    requests.post(bot_url + "/sendPhoto", {'chat_id': msg['message']['chat']['id'],
+                                                           'photo': 'https://source.unsplash.com/random/600x600'})
