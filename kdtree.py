@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -56,32 +58,39 @@ def search_closest_kdtree_rec(tree, q, best):
     if tree is None:
         return
     d = distance(tree.point, q)
-    if d < best['distance']:
-        best["distance"] = d
-        best["point"] = tree.point
+    if d < best[-1]['distance']:
+        best.append({"point": tree.point, "distance": d})
+        best.sort(key=lambda x: x["distance"])
+        best[:] = best[:-1]
 
     if q[tree.axis] > tree.point[tree.axis]:
         # search right
         search_closest_kdtree_rec(tree.right, q, best)
         # there might be a best solution on the left side anyway
-        if q[tree.axis] - best["distance"] < tree.point[tree.axis]:
+        if q[tree.axis] - best[-1]["distance"] < tree.point[tree.axis]:
             search_closest_kdtree_rec(tree.left, q, best)
     else:
         # search left
         search_closest_kdtree_rec(tree.left, q, best)
         # there might be a best solution on the right side anyway
-        if q[tree.axis] + best["distance"] > tree.point[tree.axis]:
+        if q[tree.axis] + best[-1]["distance"] > tree.point[tree.axis]:
             search_closest_kdtree_rec(tree.right, q, best)
 
 
-def search_closest_kdtree(tree, q):
-    best = {'point': [], 'distance': float('inf')}
+def search_closest_kdtree(tree, q, num):
+    best = [{'point': [], 'distance': float('inf')}] * num
     search_closest_kdtree_rec(tree, q, best)
-    return best['point']
+    return [x["point"] for x in best]
+
+
+def search_closest(points, q, n):
+    distances = [{'point': p, 'distance': distance(p, q)} for p in points]
+    distances.sort(key=lambda p: p['distance'])
+    return [p["point"] for p in distances[:n]]
 
 
 def main():
-    n = 50
+    n = 500
     xmin = 0
     xmax = 100
     ymin = 0
@@ -94,10 +103,24 @@ def main():
     plot_points(points)
 
     q = [23, 17]
+    num = 10
+    s = time.time()
+    result = search_closest_kdtree(tree, q, num)
+    e = time.time()
+    t_kd = e - s
+    s = time.time()
+    brute_result = search_closest(points, q, num)
+    e = time.time()
+    t_brute = e - s
+    print("time kd: ", t_kd)
+    print("time brute: ", t_brute)
 
-    closest = search_closest_kdtree(tree, q)
+    print(brute_result)
+    print(result)
 
-    plt.scatter(closest[0], closest[1], color="r")
+    assert (np.array(brute_result) == np.array(result)).all()
+
+    plt.scatter([r[0] for r in result], [r[1] for r in result], color="r")
     plt.scatter(q[0], q[1], color="g")
     plt.show()
 
