@@ -9,6 +9,53 @@ last_update = 0
 
 command_history = {}
 api_key = '7sopi7Ekw99TV5rYxGXrzXIkq9dOZTAL'
+
+
+def handle_msg(msg):
+    print('message: ', msg)
+    if 'location' in msg["message"]:
+        x = requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
+                                                     'text': 'Your location is \'{},{}\''.format(
+                                                         msg['message']['location']['latitude'],
+                                                         msg['message']['location']['latitude']),
+                                                     'reply_markup': json.dumps({'remove_keyboard': True})})
+        location = msg['message']['location']
+        locations = '{},{}|marker-start|'.format(location['latitude'], location['longitude'])
+        requests.post(bot_url + "/sendPhoto", {'chat_id': msg['message']['chat']['id'],
+                                               'photo': 'https://www.mapquestapi.com/staticmap/v5/map?locations={}&zoom=16&size=600,400@2x&key={}'.format(
+                                                   locations,
+                                                   api_key)})
+        print("response: ", x.json())
+    if 'text' in msg['message']:
+        requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
+                                                 'text': 'You said \'{}\''.format(msg['message']['text'])})
+        if 'entities' not in msg['message']:
+            requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
+                                                     'text': 'Sorry, just send a command /link, /banelco'})
+        else:
+            entities = msg['message']['entities']
+            if len(entities) != 1:
+                requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
+                                                         'text': 'More than one entity: Sorry, just send a command /link, /banelco'})
+            else:
+                entity = entities[0]
+                if entity['type'] != "bot_command":
+                    requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
+                                                             'text': 'Not a command: Sorry, just send a command /link, /banelco'})
+                else:
+                    command = msg['message']['text'][entity['offset']:entity['offset'] + entity['length']]
+                    # requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
+                    #                                          'text': 'Received command' + command})
+                    # requests.post(bot_url + "/sendPhoto", {'chat_id': msg['message']['chat']['id'],
+                    #                                        'photo': 'https://source.unsplash.com/random/600x600'})
+                    x = requests.post(bot_url + "/sendMessage",
+                                      {'chat_id': msg['message']['chat']['id'], 'text': "Please send your location",
+                                       'reply_markup': json.dumps({
+                                           'keyboard': [[{'text': 'Send location', "request_location": True}]],
+                                           "one_time_keyboard": True, "resize_keyboard": True})})
+                    print("result: ", x.json())
+
+
 while True:
     params = {'timeout': 60, 'offset': last_update + 1}
     response = requests.post(bot_url + "/getUpdates", params)
@@ -19,45 +66,4 @@ while True:
     last_update = response_json['result'][-1]['update_id']
     print("updates:")
     for msg in response_json['result']:
-        print('message: ', msg)
-        if 'location' in msg["message"]:
-            x = requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
-                                                         'text': 'Your location is \'{},{}\''.format(
-                                                             msg['message']['location']['latitude'],
-                                                             msg['message']['location']['latitude']),
-                                                         'reply_markup': json.dumps({'remove_keyboard': True})})
-            location = msg['message']['location']
-            locations = '{},{}|marker-start|'.format(location['latitude'], location['longitude'])
-            requests.post(bot_url + "/sendPhoto", {'chat_id': msg['message']['chat']['id'],
-                                                   'photo': 'https://www.mapquestapi.com/staticmap/v5/map?locations={}&zoom=16&size=600,400@2x&key={}'.format(
-                                                       locations,
-                                                       api_key)})
-            print("response: ", x.json())
-        if 'text' in msg['message']:
-            requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
-                                                     'text': 'You said \'{}\''.format(msg['message']['text'])})
-            if 'entities' not in msg['message']:
-                requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
-                                                         'text': 'Sorry, just send a command /link, /banelco'})
-            else:
-                entities = msg['message']['entities']
-                if len(entities) != 1:
-                    requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
-                                                             'text': 'More than one entity: Sorry, just send a command /link, /banelco'})
-                else:
-                    entity = entities[0]
-                    if entity['type'] != "bot_command":
-                        requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
-                                                                 'text': 'Not a command: Sorry, just send a command /link, /banelco'})
-                    else:
-                        command = msg['message']['text'][entity['offset']:entity['offset'] + entity['length']]
-                        # requests.post(bot_url + "/sendMessage", {'chat_id': msg['message']['chat']['id'],
-                        #                                          'text': 'Received command' + command})
-                        # requests.post(bot_url + "/sendPhoto", {'chat_id': msg['message']['chat']['id'],
-                        #                                        'photo': 'https://source.unsplash.com/random/600x600'})
-                        x = requests.post(bot_url + "/sendMessage",
-                                          {'chat_id': msg['message']['chat']['id'], 'text': "Please send your location",
-                                           'reply_markup': json.dumps({
-                                               'keyboard': [[{'text': 'Send location', "request_location": True}]],
-                                               "one_time_keyboard": True, "resize_keyboard": True})})
-                        print("result: ", x.json())
+        handle_msg(msg)
