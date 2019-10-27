@@ -14,12 +14,12 @@ api_key = '7sopi7Ekw99TV5rYxGXrzXIkq9dOZTAL'
 def handle_msg(msg):
     print('message: ', msg)
     if 'location' in msg:
+        location = msg['location']
         x = requests.post(bot_url + "/sendMessage", {'chat_id': msg['chat']['id'],
                                                      'text': 'Your location is \'{},{}\''.format(
-                                                         msg['location']['latitude'],
-                                                         msg['location']['latitude']),
+                                                         location['latitude'],
+                                                         location['latitude']),
                                                      'reply_markup': json.dumps({'remove_keyboard': True})})
-        location = msg['location']
         locations = '{},{}|marker-start|'.format(location['latitude'], location['longitude'])
         requests.post(bot_url + "/sendPhoto", {'chat_id': msg['chat']['id'],
                                                'photo': 'https://www.mapquestapi.com/staticmap/v5/map?locations={}&zoom=16&size=600,400@2x&key={}'.format(
