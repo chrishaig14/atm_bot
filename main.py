@@ -9,7 +9,7 @@ bot_url = "https://api.telegram.org/bot" + token
 
 last_update = 0
 
-command_history = {} # user id -> last command
+command_history = {}  # user id -> last command
 
 api_key = '7sopi7Ekw99TV5rYxGXrzXIkq9dOZTAL'
 
@@ -50,11 +50,11 @@ def handle_msg(msg):
         print("response: ", x.json())
         msg_text = "Cajeros de la red " + command + "\n"
         n = 0
-        for i,l in results.iterrows():
-            msg_text += str(n+1) + ") " + l['red'] + " - " + l['banco'] + " - " + l["ubicacion"] + "\n"
+        for i, l in results.iterrows():
+            msg_text += str(n + 1) + ") " + l['red'] + " - " + l['banco'] + " - " + l["ubicacion"] + "\n"
             n += 1
         del command_history[msg["from"]["id"]]
-        x = requests.post(bot_url+"/sendMessage",{"chat_id":msg["chat"]["id"],"text":msg_text})
+        x = requests.post(bot_url + "/sendMessage", {"chat_id": msg["chat"]["id"], "text": msg_text})
         print("response: ", x.json())
     if 'text' in msg:
         requests.post(bot_url + "/sendMessage", {'chat_id': msg['chat']['id'],
@@ -66,7 +66,7 @@ def handle_msg(msg):
                 if entity['type'] == 'bot_command':
                     command = msg['text'][entity['offset']:entity['offset'] + entity['length']][1:].upper()
                     if command == "LINK" or command == "BANELCO":
-                        command_history[msg["from"]["id"]] = command # remember command for when location arrives
+                        command_history[msg["from"]["id"]] = command  # remember command for when location arrives
                         ok = True
                         text = "Please send your location"
                         reply_markup = json.dumps({

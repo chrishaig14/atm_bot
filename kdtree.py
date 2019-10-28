@@ -43,6 +43,7 @@ class Node:
         self.left = None
         self.right = None
 
+
 def make_kdtree(points: [Point], axis):
     # axis 0 => x, split horizontally
     # axis 1 => y, split vertically
@@ -121,13 +122,12 @@ def main():
     ymax = 100
     points = generate_random_points(n, xmin, ymin, xmax, ymax)
 
-    points = [Point(i,[p[0],p[1]]) for i,p in enumerate(points)]
-    p_dict = {p.ID:[p.xy[0],p.xy[1]] for p in points}
-    tree = make_kdtree(points,axis=0)
+    points = [Point(i, [p[0], p[1]]) for i, p in enumerate(points)]
+    p_dict = {p.ID: [p.xy[0], p.xy[1]] for p in points}
+    tree = make_kdtree(points, axis=0)
 
-    
-    q = [54,70]
-    results = search_closest_kdtree(tree,q,23)
+    q = [54, 70]
+    results = search_closest_kdtree(tree, q, 23)
 
     # plot original points
 
@@ -135,17 +135,13 @@ def main():
 
     # plot query point
 
-    plt.scatter(q[0],q[1],color="g")
+    plt.scatter(q[0], q[1], color="g")
 
     # plot results
 
     plt.scatter([p_dict[id][0] for id in results], [p_dict[id][1] for id in results], color="r")
 
-
-
     plt.show()
-
-
 
 
 if __name__ == '__main__':
