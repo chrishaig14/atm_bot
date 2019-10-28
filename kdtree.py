@@ -16,9 +16,10 @@ import matplotlib.pyplot as plt
 
 
 class Point:
-    def __init__(self, ID, xy):
+    def __init__(self, ID, xy, active):
         self.ID = ID
         self.xy = xy
+        self.active = active
 
     def __repr__(self):
         return "Point(" + str(self.ID) + "," + str(self.xy) + "]"
@@ -78,11 +79,13 @@ def distance(a, b):
 def search_closest_kdtree_rec(tree, q, best):
     if tree is None:
         return
-    d = distance(tree.point.xy, q)
-    if d < best[-1]['distance']:
-        best.append({"point": tree.point, "distance": d})
-        best.sort(key=lambda x: x["distance"])
-        best[:] = best[:-1]
+    if tree.point.active:
+        # only consider this point as a potential result if it is active
+        d = distance(tree.point.xy, q)
+        if d < best[-1]['distance']:
+            best.append({"point": tree.point, "distance": d})
+            best.sort(key=lambda x: x["distance"])
+            best[:] = best[:-1]
 
     if q[tree.axis] > tree.point.xy[tree.axis]:
         # search right
@@ -101,7 +104,7 @@ def search_closest_kdtree_rec(tree, q, best):
 def search_closest_kdtree(tree, q, num):
     best = [{'point': [], 'distance': float('inf')}] * num
     search_closest_kdtree_rec(tree, q, best)
-    return [x["point"].ID for x in best]
+    return best
 
 
 def search_closest(points, q, n):

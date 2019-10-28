@@ -16,18 +16,21 @@ class System:
         self.points_x_y = self.points_long_lat_rad.copy()
         self.points_x_y['long'] = R * self.points_x_y['long'] * np.cos(self.l0)
         self.points_x_y['lat'] = R * self.points_x_y['lat']
+        self.uses = {id:1000 for id in self.points_x_y['id']}
+        #print("USES:" ,self.uses)
+        #print(self.points_x_y)
 
-        print(self.points_x_y)
 
+        self.map_id_to_point = {p['id']:Point(p['id'],[p['long'],p['lat']],True) for i,p in self.points_x_y.iterrows()}
 
-        link_points = [Point(p['id'],[p['long'],p['lat']]) for i,p in self.points_x_y.loc[self.points_x_y['red'] == "LINK"].iterrows()]
-        banelco_points = [Point(p['id'],[p['long'],p['lat']]) for i,p in self.points_x_y.loc[self.points_x_y['red'] == "BANELCO"].iterrows()]
+        link_points = [self.map_id_to_point[p['id']] for i,p in self.points_x_y.loc[self.points_x_y['red'] == "LINK"].iterrows()]
+        banelco_points = [self.map_id_to_point[p['id']] for i,p in self.points_x_y.loc[self.points_x_y['red'] == "BANELCO"].iterrows()]
 
-        print("ALL POINTS: ")
-        print("LINK")
-        print([p.ID for p in link_points])
-        print("BANELCO")
-        print([p.ID for p in banelco_points])
+        #print("ALL POINTS: ")
+        #print("LINK")
+        #print([p.ID for p in link_points])
+        #print("BANELCO")
+        #print([p.ID for p in banelco_points])
 
 
         self.kd_link = make_kdtree(link_points, axis=0)
@@ -44,8 +47,26 @@ class System:
         q[1] = R * q[1]
         results = search_closest_kdtree(kd_search, q, 3)
         print("RESULTSIII: ", results)
-        r=pd.DataFrame({'id':results}).merge(self.points_long_lat)
-        return r
+        ids = [p['point'].ID for p in results]
+        r=pd.DataFrame({'id':ids}).merge(self.points_long_lat)
+        self.simulate_use(ids)
+        #print(self.uses)
+        return r,{p['point'].ID:p['distance'] for p in results}
+    def simulate_use(self,r):
+        x = np.random.rand()
+        # 70% closest, 20% 2nd closest 10% 3d closest
+        if x < 0.7:
+            c = 0
+        if x > 0.7 and x < 0.9:
+            c = 1
+        if x > 0.9:
+            c = 2
+        print("chosen id: ", r[c])
+        self.uses[r[c]] -= 1
+        if self.uses[r[c]] == 0:
+            self.map_id_to_point[r[c]].active = False
+            
+
 
 if __name__=='__main__':
 
