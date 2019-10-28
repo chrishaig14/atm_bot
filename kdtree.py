@@ -4,7 +4,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+# HOW TO USE:
 
+# points is a list of Point(id,xy)
+# id is int
+# xy is list of 2d coords
+# tree = make_kdtree(points,axis=0)
+# search_closest_kdtree(tree,q,n)
+# where q = list of 2d coords (x,y)
+# and n = number of nearest neighbours we want
 
 
 class Point:
