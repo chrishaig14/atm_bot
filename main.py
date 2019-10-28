@@ -9,7 +9,8 @@ bot_url = "https://api.telegram.org/bot" + token
 
 last_update = 0
 
-command_history = {}
+command_history = {} # user id -> last command
+
 api_key = '7sopi7Ekw99TV5rYxGXrzXIkq9dOZTAL'
 
 s = System()
@@ -29,6 +30,11 @@ def make_map_url(start, locations):
 def handle_msg(msg):
     print('message: ', msg)
     if 'location' in msg:
+        if msg["from"]["id"] not in command_history:
+            requests.post(bot_url + "/sendMessage", {'chat_id': msg['chat']['id'],
+                                                     'text': 'Sorry, just send a command /link, /banelco'})
+            return
+        command = command_history[msg["from"]["id"]]
         location = msg['location']
         start = [location['latitude'], location['longitude']]
         results = s.search_nearest(start[0], start[1], "LINK")
@@ -42,12 +48,12 @@ def handle_msg(msg):
                                                    'photo': map_url,
                                                    'reply_markup': json.dumps({'remove_keyboard': True})})
         print("response: ", x.json())
-        msg_text = ""
+        msg_text = "Cajeros de la red " + command + "\n"
         n = 0
         for i,l in results.iterrows():
             msg_text += str(n+1) + ") " + l['banco'] + " - " + l["ubicacion"] + "\n"
             n += 1
-
+        del command_history[msg["from"]["id"]]
         x = requests.post(bot_url+"/sendMessage",{"chat_id":msg["chat"]["id"],"text":msg_text})
         print("response: ", x.json())
     if 'text' in msg:
@@ -58,8 +64,9 @@ def handle_msg(msg):
             if len(msg['entities']) == 1:
                 entity = msg['entities'][0]
                 if entity['type'] == 'bot_command':
-                    command = msg['text'][entity['offset']:entity['offset'] + entity['length']]
-                    if command == "/link" or command == "/banelco":
+                    command = msg['text'][entity['offset']:entity['offset'] + entity['length']][1:].upper()
+                    if command == "LINK" or command == "BANELCO":
+                        command_history[msg["from"]["id"]] = command # remember command for when location arrives
                         ok = True
                         text = "Please send your location"
                         reply_markup = json.dumps({
