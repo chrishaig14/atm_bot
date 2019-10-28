@@ -46,21 +46,42 @@ class System:
         q[0] = R * q[0] * np.cos(self.l0)
         q[1] = R * q[1]
         results = search_closest_kdtree(kd_search, q, 3)
-        print("RESULTSIII: ", results)
+        l = []
+        # keep only the places which are within 500m
+        for r in results:
+            if r['distance'] < 500:
+                l.append(r)
+        results = l
+
+        # print("RESULTSIII: ", results)
         ids = [p['point'].ID for p in results]
         r=pd.DataFrame({'id':ids}).merge(self.points_long_lat)
         self.simulate_use(ids)
         #print(self.uses)
         return r,{p['point'].ID:p['distance'] for p in results}
     def simulate_use(self,r):
-        x = np.random.rand()
-        # 70% closest, 20% 2nd closest 10% 3d closest
-        if x < 0.7:
+        if len(r)==0:
+            #no results
+            return 
+        if len(r)==1:
+            # only one result within 500m with available uses, choose it 100% of the cases
             c = 0
-        if x > 0.7 and x < 0.9:
-            c = 1
-        if x > 0.9:
-            c = 2
+        else:
+            x = np.random.rand()
+            if len(r)==2:
+                # two results within 500m with available uses, choose 1st 70% and 2nd 30%
+                if x < 0.7:
+                    c = 0
+                else:
+                    c = 1
+            elif len(r)==3:
+                # three results withing 500m with available uses, choose 70% closest, 20% 2nd closest 10% 3d closest
+                if x < 0.7:
+                    c = 0
+                if x > 0.7 and x < 0.9:
+                    c = 1
+                if x > 0.9:
+                    c = 2                
         print("chosen id: ", r[c])
         self.uses[r[c]] -= 1
         if self.uses[r[c]] == 0:
