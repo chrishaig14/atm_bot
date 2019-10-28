@@ -2,6 +2,8 @@ import json
 
 import requests
 
+from system import System
+
 token = "932440048:AAEJBx6vBq2A0fef5I-7OGEH6_25i1IIWI0"
 bot_url = "https://api.telegram.org/bot" + token
 
@@ -10,41 +12,8 @@ last_update = 0
 command_history = {}
 api_key = '7sopi7Ekw99TV5rYxGXrzXIkq9dOZTAL'
 
-###########
+s = System()
 
-import pandas as pd
-
-from kdtree import *
-
-data = pd.read_csv("cajeros-automaticos.csv")
-
-xmin = data['long'].min()
-xmax = data['long'].max()
-ymin = data['lat'].min()
-ymax = data['lat'].max()
-
-print(xmin)
-
-banelco = data[data['red'] == 'BANELCO']
-link = data[data['red'] == 'LINK']
-
-p_link = link[['lat', 'long']].to_numpy()
-
-plt.scatter(p_link[:, 0], p_link[:, 1])
-plt.show()
-
-kd_link = make_kdtree(p_link, axis=0)
-plot_points(p_link)
-num = 3
-q = [(xmax + xmin) / 2, (ymax + ymin) / 2]
-b = search_closest_kdtree(kd_link, q, num)
-b = np.array(b)
-
-
-# plt.scatter(b[:, 0], b[:, 1], color='b')
-# plt.scatter(q[0], q[1], color='g')
-# plt.show()
-##################
 
 def make_map_url(start, locations):
     start = '{},{}|marker-start'.format(start[0], start[1])
@@ -62,12 +31,24 @@ def handle_msg(msg):
     if 'location' in msg:
         location = msg['location']
         start = [location['latitude'], location['longitude']]
-        locations = search_closest_kdtree(kd_link, start, 5)
+        results = s.search_nearest(start[0], start[1], "LINK")
+
+        print("RESULTS: ", results)
+
+        locations = [[l['lat'], l['long']] for i, l in results.iterrows()]
         map_url = make_map_url(start, locations)
         print("MAP URL: ", map_url)
         x = requests.post(bot_url + "/sendPhoto", {'chat_id': msg['chat']['id'],
                                                    'photo': map_url,
                                                    'reply_markup': json.dumps({'remove_keyboard': True})})
+        print("response: ", x.json())
+        msg_text = ""
+        n = 0
+        for i,l in results.iterrows():
+            msg_text += str(n+1) + ") " + l['banco'] + " - " + l["ubicacion"] + "\n"
+            n += 1
+
+        x = requests.post(bot_url+"/sendMessage",{"chat_id":msg["chat"]["id"],"text":msg_text})
         print("response: ", x.json())
     if 'text' in msg:
         requests.post(bot_url + "/sendMessage", {'chat_id': msg['chat']['id'],
