@@ -37,7 +37,7 @@ def handle_msg(msg):
         command = command_history[msg["from"]["id"]]
         location = msg['location']
         start = [location['latitude'], location['longitude']]
-        results = s.search_nearest(start[0], start[1], "LINK")
+        results = s.search_nearest(start[0], start[1], command)
 
         print("RESULTS: ", results)
 
@@ -51,7 +51,7 @@ def handle_msg(msg):
         msg_text = "Cajeros de la red " + command + "\n"
         n = 0
         for i,l in results.iterrows():
-            msg_text += str(n+1) + ") " + l['banco'] + " - " + l["ubicacion"] + "\n"
+            msg_text += str(n+1) + ") " + l['red'] + " - " + l['banco'] + " - " + l["ubicacion"] + "\n"
             n += 1
         del command_history[msg["from"]["id"]]
         x = requests.post(bot_url+"/sendMessage",{"chat_id":msg["chat"]["id"],"text":msg_text})
