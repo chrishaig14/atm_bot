@@ -3,6 +3,9 @@ from kdtree import *
 import threading
 import time
 
+from tinydb import TinyDB, Query
+
+
 PI = 3.14159265
 R = 6371000  # Earth radius in meters
 N = 10
@@ -15,7 +18,8 @@ class System:
             if now.tm_hour == 8 and now.tm_wday < 5 and not updated:
                 self.lock.acquire()
                 print("#################### RESETTING USES at ", now)
-                self.uses = {id:N for id in self.points_x_y['id']}
+                # self.uses = {id:N for id in self.points_x_y['id']}
+                self.uses_db.update({'uses': N})
                 for p in self.map_id_to_point.values():
                     p.active= True
                 self.lock.release()
@@ -27,6 +31,7 @@ class System:
 
 
     def __init__(self):
+
         self.lock = threading.Lock()
         reset_thread = threading.Thread(target=self.reset_uses)
 
@@ -39,12 +44,24 @@ class System:
         self.points_x_y = self.points_long_lat_rad.copy()
         self.points_x_y['long'] = R * self.points_x_y['long'] * np.cos(self.l0)
         self.points_x_y['lat'] = R * self.points_x_y['lat']
-        self.uses = {id:N for id in self.points_x_y['id']}
+        # self.uses = {id:N for id in self.points_x_y['id']}
+        self.map_id_to_point = {p['id']: Point(p['id'], [p['long'], p['lat']], True) for i, p in
+                                self.points_x_y.iterrows()}
+        self.uses_db = TinyDB("uses.json")
+        results = self.uses_db.search(Query())
+        print("DATABASE RESULTS: ", results)
+        if results == []:
+            # empty database, initialize
+            self.uses_db.insert_multiple({'id': id, 'uses': N} for id in self.points_x_y['id'])
+            for p in self.map_id_to_point.values():
+                p.active = True
+        else:
+            for r in results:
+                self.map_id_to_point[r['id']].active = r['uses'] != 0
+
         #print("USES:" ,self.uses)
         #print(self.points_x_y)
 
-
-        self.map_id_to_point = {p['id']:Point(p['id'],[p['long'],p['lat']],True) for i,p in self.points_x_y.iterrows()}
         reset_thread.start()
 
         link_points = [self.map_id_to_point[p['id']] for i,p in self.points_x_y.loc[self.points_x_y['red'] == "LINK"].iterrows()]
@@ -115,8 +132,9 @@ class System:
                 if x > 0.9:
                     c = 2                
         print("chosen id: ", r[c])
-        self.uses[r[c]] -= 1
-        if self.uses[r[c]] == 0:
+        u = self.uses_db.search(Query().id == r[c])[0]['uses']
+        self.uses_db.update({'uses': u - 1}, Query().id == r[c])
+        if u - 1 == 0:
             self.map_id_to_point[r[c]].active = False
             
 
