@@ -44,10 +44,6 @@ class System:
         q[1] = R * q[1]
         results = search_closest_kdtree(kd_search, q, 3)
         print("RESULTSIII: ", results)
-
-        #r = pd.DataFrame([self.points_long_lat[self.points_long_lat['id']==i] for i in results],columns=self.points_long_lat.columns)
-
-        #r = self.points_long_lat.loc[self.points_long_lat['id'].isin(results)]
         r=pd.DataFrame({'id':results}).merge(self.points_long_lat)
         return r
 
