@@ -132,6 +132,7 @@ class System:
                     c = 2
         print("chosen id: ", r[c])
         u = self.uses_db.search(Query().id == r[c])[0]['uses']
+        print("******************USES LEFT: ", u - 1)
         self.uses_db.update({'uses': u - 1}, Query().id == r[c])
         if u - 1 == 0:
             self.map_id_to_point[r[c]].active = False

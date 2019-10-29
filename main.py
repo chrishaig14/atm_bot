@@ -25,38 +25,37 @@ def make_map_url(start, locations):
                                                                                                                  API_KEY)
 
 
+commands = ["LINK", "BANELCO"]
+
 def handle_text_msg(msg):
-    requests.post(BOT_URL + "/sendMessage", {'chat_id': msg['chat']['id'],
-                                             'text': 'You said \'{}\''.format(msg['text'])})
-    ok = False
-    if 'entities' in msg:
-        if len(msg['entities']) == 1:
-            entity = msg['entities'][0]
-            if entity['type'] == 'bot_command':
-                command = msg['text'][entity['offset']:entity['offset'] + entity['length']][1:].upper()
-                if command == "LINK" or command == "BANELCO":
-                    command_history[msg["from"]["id"]] = command  # remember command for when location arrives
-                    ok = True
-                    text = "Please send your location"
-                    reply_markup = json.dumps({
-                        'keyboard': [[{'text': 'Send location', "request_location": True}]],
-                        "one_time_keyboard": True, "resize_keyboard": True})
-                    msg_obj = {'chat_id': msg['chat']['id'], 'text': text, 'reply_markup': reply_markup}
-                    x = requests.post(BOT_URL + "/sendMessage", msg_obj)
-    if not ok:
+    command = msg["text"][1:].upper()  # remove fwd slash
+    if command in commands:
+        command_history[msg["from"]["id"]] = command  # remember command for when location arrives
+        text = "Por favor, enviar su ubicación"
+        reply_markup = json.dumps({
+            'keyboard': [[{'text': 'Enviar ubicación', "request_location": True}]],
+            "one_time_keyboard": True, "resize_keyboard": True})
+        msg_obj = {'chat_id': msg['chat']['id'], 'text': text, 'reply_markup': reply_markup}
+        x = requests.post(BOT_URL + "/sendMessage", msg_obj)
+    else:
         requests.post(BOT_URL + "/sendMessage", {'chat_id': msg['chat']['id'],
-                                                 'text': 'Sorry, just send a command /link, /banelco'})
+                                                 'text': 'Enviar comando /link o /banelco'})
 
 
 def handle_location_msg(msg):
     if msg["from"]["id"] not in command_history:
         requests.post(BOT_URL + "/sendMessage", {'chat_id': msg['chat']['id'],
-                                                 'text': 'Sorry, just send a command /link, /banelco'})
+                                                 'text': 'Enviar comando /link o /banelco'})
         return
     command = command_history[msg["from"]["id"]]
     location = msg['location']
     start = [location['latitude'], location['longitude']]
     results = s.search_nearest(start[0], start[1], command)
+
+    if len(results[0]) == 0:
+        x = requests.post(BOT_URL + "/sendMessage",
+                          {"chat_id": msg["chat"]["id"], "text": "No hay cajeros disponibles"})
+        return
 
     print("RESULTS: ", results)
 
