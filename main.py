@@ -11,6 +11,8 @@ command_history = {}  # user id -> last command
 
 API_KEY = '7sopi7Ekw99TV5rYxGXrzXIkq9dOZTAL'
 
+MAP_URL = 'https://www.mapquestapi.com/staticmap/v5/map?locations={}||{}&zoom=16&size=600,400@2x&key={}'
+
 s = System()
 
 
@@ -19,34 +21,34 @@ def make_map_url(start, locations):
     ls = ""
     for i, l in enumerate(locations):
         ls += "{},{}|marker-{}||".format(l[0], l[1], i + 1)
-
-    return 'https://www.mapquestapi.com/staticmap/v5/map?locations={}||{}&zoom=16&size=600,400@2x&key={}'.format(start,
-                                                                                                                 ls,
-                                                                                                                 API_KEY)
+    return MAP_URL.format(start, ls, API_KEY)
 
 
 commands = ["LINK", "BANELCO"]
+
+MSG_INFO = 'Enviar comando /link o /banelco'
+MSG_REQUEST_LOCATION = "Por favor, enviar su ubicación"
+MSG_NO_RESULTS = "No hay cajeros disponibles"
+MSG_RESULTS = "Cajeros de la red "
 
 
 def handle_text_msg(msg):
     command = msg["text"][1:].upper()  # remove fwd slash
     if command in commands:
         command_history[msg["from"]["id"]] = command  # remember command for when location arrives
-        text = "Por favor, enviar su ubicación"
         reply_markup = json.dumps({
             'keyboard': [[{'text': 'Enviar ubicación', "request_location": True}]],
             "one_time_keyboard": True, "resize_keyboard": True})
-        msg_obj = {'chat_id': msg['chat']['id'], 'text': text, 'reply_markup': reply_markup}
+        msg_obj = {'chat_id': msg['chat']['id'], 'text': MSG_REQUEST_LOCATION, 'reply_markup': reply_markup}
         x = requests.post(BOT_URL + "/sendMessage", msg_obj)
     else:
-        requests.post(BOT_URL + "/sendMessage", {'chat_id': msg['chat']['id'],
-                                                 'text': 'Enviar comando /link o /banelco'})
+        requests.post(BOT_URL + "/sendMessage", {'chat_id': msg['chat']['id'], 'text': MSG_INFO})
 
 
 def handle_location_msg(msg):
     if msg["from"]["id"] not in command_history:
         requests.post(BOT_URL + "/sendMessage", {'chat_id': msg['chat']['id'],
-                                                 'text': 'Enviar comando /link o /banelco'})
+                                                 'text': MSG_INFO})
         return
     command = command_history[msg["from"]["id"]]
     location = msg['location']
@@ -55,7 +57,7 @@ def handle_location_msg(msg):
 
     if len(results[0]) == 0:
         x = requests.post(BOT_URL + "/sendMessage",
-                          {"chat_id": msg["chat"]["id"], "text": "No hay cajeros disponibles"})
+                          {"chat_id": msg["chat"]["id"], "text": MSG_NO_RESULTS})
         return
 
     print("RESULTS: ", results)
@@ -67,7 +69,7 @@ def handle_location_msg(msg):
                                                'photo': map_url,
                                                'reply_markup': json.dumps({'remove_keyboard': True})})
     print("Response: ", x.json())
-    msg_text = "Cajeros de la red " + command + "\n"
+    msg_text = MSG_RESULTS + command + "\n"
     n = 0
     for i, l in results[0].iterrows():
         msg_text += "{})\nBanco: {}\nDirección: {}\nDistancia: {}m\n".format(i + 1, l['banco'], l['ubicacion'],
