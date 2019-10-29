@@ -7,12 +7,12 @@ from tinydb import TinyDB, Query
 
 PI = 3.14159265
 R = 6371000  # Earth radius in meters
-N = 10
+N = 10  # number of initial available uses
 
 
 class System:
     def reset_uses(self):
-        updated = False  # this is to prevent updating more than once at 08:xx
+        updated = False  # this is to prevent updating more than once at 08:xx hs
         while True:
             now = time.localtime()
             if now.tm_hour == 8 and now.tm_wday < 5 and not updated:
@@ -108,6 +108,7 @@ class System:
         return r, {p['point'].ID: p['distance'] for p in results}
 
     def simulate_use(self, r):
+        # given a list of point ids, choose one of them according to the following distribution
         if len(r) == 0:
             # no results
             return
@@ -131,10 +132,11 @@ class System:
                 if x > 0.9:
                     c = 2
         print("chosen id: ", r[c])
-        u = self.uses_db.search(Query().id == r[c])[0]['uses']
+        u = self.uses_db.search(Query().id == r[c])[0]['uses']  # current number of available uses
         print("******************USES LEFT: ", u - 1)
-        self.uses_db.update({'uses': u - 1}, Query().id == r[c])
+        self.uses_db.update({'uses': u - 1}, Query().id == r[c])  # decrease number of available uses by 1
         if u - 1 == 0:
+            # if there are no more available uses, don't consider this point in further searches, until next reset
             self.map_id_to_point[r[c]].active = False
 
 
