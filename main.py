@@ -66,10 +66,7 @@ def handle_location_msg(msg):
     locations = [[l['lat'], l['long']] for i, l in results[0].iterrows()]
     map_url = make_map_url(start, locations)
     print("MAP URL: ", map_url)
-    x = requests.post(BOT_URL + "/sendPhoto", {'chat_id': msg['chat']['id'],
-                                               'photo': map_url,
-                                               'reply_markup': json.dumps({'remove_keyboard': True})})
-    print("Response: ", x.json())
+
     msg_text = MSG_RESULTS + command + "\n"
     n = 0
     for i, l in results[0].iterrows():
@@ -77,7 +74,11 @@ def handle_location_msg(msg):
                                                                              int(results[1][l['id']]))
         n += 1
     del command_history[msg["from"]["id"]]
-    x = requests.post(BOT_URL + "/sendMessage", {"chat_id": msg["chat"]["id"], "text": msg_text})
+
+    x = requests.post(BOT_URL + "/sendPhoto", {'chat_id': msg['chat']['id'],
+                                               'photo': map_url, 'caption': msg_text,
+                                               'reply_markup': json.dumps({'remove_keyboard': True})})
+
     print("Response: ", x.json())
 
 
