@@ -27,6 +27,7 @@ def make_map_url(start, locations):
 
 commands = ["LINK", "BANELCO"]
 
+
 def handle_text_msg(msg):
     command = msg["text"][1:].upper()  # remove fwd slash
     if command in commands:
