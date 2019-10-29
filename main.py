@@ -30,6 +30,7 @@ MSG_INFO = 'Enviar comando /link o /banelco'
 MSG_REQUEST_LOCATION = "Por favor, enviar su ubicación"
 MSG_NO_RESULTS = "No hay cajeros disponibles"
 MSG_RESULTS = "Cajeros de la red "
+MSG_SEND_LOCATION = 'Enviar ubicación'
 
 
 def handle_text_msg(msg):
@@ -37,7 +38,7 @@ def handle_text_msg(msg):
     if command in commands:
         command_history[msg["from"]["id"]] = command  # remember command for when location arrives
         reply_markup = json.dumps({
-            'keyboard': [[{'text': 'Enviar ubicación', "request_location": True}]],
+            'keyboard': [[{'text': MSG_SEND_LOCATION, "request_location": True}]],
             "one_time_keyboard": True, "resize_keyboard": True})
         msg_obj = {'chat_id': msg['chat']['id'], 'text': MSG_REQUEST_LOCATION, 'reply_markup': reply_markup}
         x = requests.post(BOT_URL + "/sendMessage", msg_obj)
