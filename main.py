@@ -1,4 +1,7 @@
 import json
+import threading
+import time
+
 import requests
 from system import System
 
@@ -41,15 +44,25 @@ def handle_text_msg(msg):
             'keyboard': [[{'text': MSG_SEND_LOCATION, "request_location": True}]],
             "one_time_keyboard": True, "resize_keyboard": True})
         msg_obj = {'chat_id': msg['chat']['id'], 'text': MSG_REQUEST_LOCATION, 'reply_markup': reply_markup}
-        x = requests.post(BOT_URL + "/sendMessage", msg_obj)
+        async_post(BOT_URL + "/sendMessage", msg_obj)
     else:
-        requests.post(BOT_URL + "/sendMessage", {'chat_id': msg['chat']['id'], 'text': MSG_INFO})
+        async_post(BOT_URL + "/sendMessage", {'chat_id': msg['chat']['id'], 'text': MSG_INFO})
+
+
+def post(url, data, callback):
+    x = requests.post(url, data)
+    # callback(x)
+
+
+def async_post(url, data, callback):
+    th = threading.Thread(target=post, args=(url, data, callback))
+    th.start()
 
 
 def handle_location_msg(msg):
     if msg["from"]["id"] not in command_history:
-        requests.post(BOT_URL + "/sendMessage", {'chat_id': msg['chat']['id'],
-                                                 'text': MSG_INFO})
+        async_post(BOT_URL + "/sendMessage", {'chat_id': msg['chat']['id'],
+                                              'text': MSG_INFO}, None)
         return
     command = command_history[msg["from"]["id"]]
     location = msg['location']
@@ -57,8 +70,7 @@ def handle_location_msg(msg):
     results = s.search_nearest(start[0], start[1], command)
 
     if len(results[0]) == 0:
-        x = requests.post(BOT_URL + "/sendMessage",
-                          {"chat_id": msg["chat"]["id"], "text": MSG_NO_RESULTS})
+        async_post(BOT_URL + "/sendMessage", {"chat_id": msg["chat"]["id"], "text": MSG_NO_RESULTS}, None)
         return
 
     print("RESULTS: ", results)
@@ -74,12 +86,10 @@ def handle_location_msg(msg):
                                                                              int(results[1][l['id']]))
         n += 1
     del command_history[msg["from"]["id"]]
-
-    x = requests.post(BOT_URL + "/sendPhoto", {'chat_id': msg['chat']['id'],
-                                               'photo': map_url, 'caption': msg_text,
-                                               'reply_markup': json.dumps({'remove_keyboard': True})})
-
-    print("Response: ", x.json())
+    async_post(BOT_URL + "/sendPhoto", {'chat_id': msg['chat']['id'],
+                                        'photo': map_url, 'caption': msg_text,
+                                        'reply_markup': json.dumps(
+                                            {'remove_keyboard': True})}, None)
 
 
 def handle_msg(msg):
