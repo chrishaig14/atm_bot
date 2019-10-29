@@ -1,10 +1,12 @@
 # Bot de Telegram para consultas de cajeros automáticos en CABA
+* Github: https://github.com/chrishaig14/atm_bot
+
 * Dependencias:
-  tinydb 
-  schedule
-  requests
-  numpy
-  pandas
+  `tinydb`
+  `schedule`
+  `requests`
+  `numpy`
+  `pandas`
  
 * Ejecutar con: `python3 main.py`
 * El nombre del usuario del bot es __py_atm_bot__
