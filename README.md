@@ -1,5 +1,11 @@
 # Bot de Telegram para consultas de cajeros automáticos en CABA
-
+* Dependencias:
+  tinydb 
+  schedule
+  requests
+  numpy
+  pandas
+ 
 * Ejecutar con: `python3 main.py`
 * El nombre del usuario del bot es __py_atm_bot__
 * El bot no acepta comandos inline (hay que crear una nueva conversación)
@@ -15,3 +21,5 @@
 * Para la generación de las imágenes se utiliza la API de [MapQuest](https://developer.mapquest.com/) (la de Google Static Maps requiere registrarse con una tarjeta de crédito).
 
 * Para comunicarse con la API de telegram se utiliza [requests](https://github.com/psf/requests). Al ser bloqueantes los requests, para hacer la comunicación más fluida, al enviar las respuestas a los usuarios se crea un nuevo thread para enviar el request.
+
+* Para facilitar la lectura y el manejo de los datos del archivo csv se usan [numpy](https://numpy.org/) y [pandas](https://pandas.pydata.org/)
